@@ -27,11 +27,12 @@ func main() {
 	// 'Assets' configures the asset server with the 'FS' variable pointing to the frontend files.
 	// 'Bind' is a list of Go struct instances. The frontend has access to the methods of these instances.
 	// 'Mac' options tailor the application when running an macOS.
+	spotifyService := &SpotifyService{}
 	app := application.New(application.Options{
 		Name:        "drum-overlay",
 		Description: "A demo of using raw HTML & CSS",
 		Services: []application.Service{
-			application.NewService(&GreetService{}),
+			application.NewService(spotifyService),
 		},
 		Assets: application.AssetOptions{
 			Handler: application.AssetFileServerFS(assets),
@@ -40,6 +41,7 @@ func main() {
 			ApplicationShouldTerminateAfterLastWindowClosed: true,
 		},
 	})
+	spotifyService.app = app
 
 	// Create a new window with the necessary options.
 	// 'Title' is the title of the window.
@@ -61,8 +63,8 @@ func main() {
 	// The frontend can listen to this event and update the UI accordingly.
 	go func() {
 		for {
-			now := time.Now().Format(time.RFC1123)
-			app.EmitEvent("time", now)
+			//now := time.Now().Format(time.RFC1123)
+			//app.EmitEvent("time", now)
 			time.Sleep(time.Second)
 		}
 	}()
