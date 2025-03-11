@@ -23,7 +23,6 @@ func main() {
 
 	// Start listening to all MIDI notes
 	noteEvents := make(chan NoteEvent, 100)
-	fmt.Println("Starting to listen to MIDI notes")
 	_, err := CollectMidiEvents(noteEvents)
 	if err != nil {
 		fmt.Printf("MIDI ERROR: %s\n", err)
@@ -47,19 +46,16 @@ func main() {
 	})
 	spotifyService.app = app
 
-	// Create a new window with the necessary options.
-	// 'Title' is the title of the window.
-	// 'Mac' options tailor the window when running on macOS.
-	// 'BackgroundColour' is the background colour of the window.
-	// 'URL' is the URL that will be loaded into the webview.
 	app.NewWebviewWindowWithOptions(application.WebviewWindowOptions{
-		Title: "Window 1",
+		Title:         "Drumbot Overlay",
+		Width:         1280,
+		Height:        720,
+		DisableResize: true,
 		Mac: application.MacWindow{
-			InvisibleTitleBarHeight: 50,
-			Backdrop:                application.MacBackdropTranslucent,
-			TitleBar:                application.MacTitleBarHiddenInset,
+			Backdrop: application.MacBackdropNormal,
+			TitleBar: application.MacTitleBarDefault,
 		},
-		BackgroundColour: application.NewRGB(27, 38, 54),
+		BackgroundColour: application.NewRGB(0, 0, 0),
 		URL:              "/",
 	})
 

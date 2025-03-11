@@ -28,15 +28,17 @@ export const useSpotifyWebPlayerApi = (token?: string): [Spotify.Player | null, 
             setPlayer(player);
 
             player.addListener('ready', ({device_id}) => {
-                console.log('Ready with Device ID', device_id);
+                // console.log('Ready with Device ID', device_id);
+                setPlaybackState(null);
             });
 
             player.addListener('not_ready', ({device_id}) => {
-                console.log('Device ID has gone offline', device_id);
+                // console.log('Device ID has gone offline', device_id);
+                setPlaybackState(null);
             });
 
             player.addListener('player_state_changed', state => {
-                console.log('Player state changed', state);
+                // console.log('Player state changed', state);
                 setPlaybackState(state);
             });
 
