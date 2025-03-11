@@ -49,7 +49,7 @@ func main() {
 	app.NewWebviewWindowWithOptions(application.WebviewWindowOptions{
 		Title:         "Drumbot Overlay",
 		Width:         1280,
-		Height:        720,
+		Height:        720 + 20, // 20 to get away from the bottom corner rounding
 		DisableResize: true,
 		Mac: application.MacWindow{
 			Backdrop: application.MacBackdropNormal,

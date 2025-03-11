@@ -143,11 +143,11 @@ function App() {
     }, [trackingSong]);
 
     return (
-        <div className="container">
-            <div className="card">
-                <div className="input-box">
-                    {!!spotify || <button className="btn" onClick={doSpotifyLogin}>Spotify</button>}
-                    <button className="btn" onClick={() => setAllNotes([])}>Reset</button>
+        <>
+            <div className="App">
+                <div>
+                    {!!spotify || <button onClick={doSpotifyLogin}>Spotify</button>}
+                    <button onClick={() => setAllNotes([])}>Reset</button>
                 </div>
                 {spotifyPlayer && (
                     <div>Player Connected!</div>
@@ -159,21 +159,25 @@ function App() {
                         <div>Progress: {playbackState.position} / {playbackState.duration}</div>
                     </div>
                 )}
+                <div className="notes">
+                    {Object.entries(td50NoteMap).map(([note, name]) => {
+                        let notesForKey = allNotes.filter(n => note === "" + n.note);
+                        if (notesForKey.length === 0) {
+                            return null;
+                        }
+                        return <NoteView
+                            key={name}
+                            name={name}
+                            lastVelocity={notesForKey[notesForKey.length - 1].velocity}
+                            noteCount={notesForKey.length}/>
+                    })}
+                </div>
             </div>
-            <div className="notes">
-                {Object.entries(td50NoteMap).map(([note, name]) => {
-                    let notesForKey = allNotes.filter(n => note === "" + n.note);
-                    if (notesForKey.length === 0) {
-                        return null;
-                    }
-                    return <NoteView
-                        key={name}
-                        name={name}
-                        lastVelocity={notesForKey[notesForKey.length - 1].velocity}
-                        noteCount={notesForKey.length}/>
-                })}
-            </div>
-        </div>
+            <span className="Corner" style={{top: 0, left: 0}}/>
+            <span className="Corner" style={{top: 0, right: 0}}/>
+            <span className="Corner" style={{bottom: 20, left: 0}}/>
+            <span className="Corner" style={{bottom: 20, right: 0}}/>
+        </>
     )
 }
 
