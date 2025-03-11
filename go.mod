@@ -4,7 +4,10 @@ go 1.23.0
 
 toolchain go1.23.4
 
-require github.com/wailsapp/wails/v3 v3.0.0-alpha.9
+require (
+	github.com/wailsapp/wails/v3 v3.0.0-alpha.9
+	gitlab.com/gomidi/midi/v2 v2.2.19
+)
 
 require (
 	dario.cat/mergo v1.0.1 // indirect
