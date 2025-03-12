@@ -172,6 +172,7 @@ function App() {
                             noteCount={notesForKey.length}/>
                     })}
                 </div>
+                <div>{allNotes.length} total notes</div>
             </div>
             <span className="Corner" style={{top: 0, left: 0}}/>
             <span className="Corner" style={{top: 0, right: 0}}/>
@@ -189,7 +190,7 @@ const NoteView = (props: { name: string, noteCount: number, lastVelocity: number
             key={props.name + props.noteCount}
             className="note-circle"
             initial={{backgroundColor: "rgb(" + brightness + ", " + brightness + ", " + brightness + ")"}}
-            animate={{backgroundColor: "rgb(128, 128, 128)"}}
+            animate={{backgroundColor: "rgb(64, 64, 64)"}}
             transition={{duration: 0.3}} // Smooth fade
         >
             {props.name}<br/> {props.noteCount}

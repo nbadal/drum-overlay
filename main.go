@@ -23,12 +23,16 @@ func main() {
 
 	// Start listening to all MIDI notes
 	noteEvents := make(chan NoteEvent, 100)
-	_, err := CollectMidiEvents(noteEvents)
-	if err != nil {
-		fmt.Printf("MIDI ERROR: %s\n", err)
-		// Continue running the app even if MIDI fails
-	}
-	//defer stopMidi()
+	stopMidiChan := make(chan func())
+
+	go func() {
+		stopMidi, err := CollectMidiEvents(noteEvents)
+		if err != nil {
+			fmt.Printf("MIDI ERROR: %s\n", err)
+			return
+		}
+		stopMidiChan <- stopMidi
+	}()
 
 	spotifyService := &SpotifyService{}
 	app := application.New(application.Options{
@@ -63,13 +67,12 @@ func main() {
 		for {
 			select {
 			case noteEvent := <-noteEvents:
-				fmt.Printf("Note: %d, Velocity: %d\n", noteEvent.Note, noteEvent.Velocity)
 				app.EmitEvent("note", noteEvent)
 			}
 		}
 	}()
 
-	err = app.Run()
+	err := app.Run()
 	if err != nil {
 		log.Fatal(err)
 	}
