@@ -1,10 +1,11 @@
-import {useEffect, useState} from 'react'
+import {useEffect, useState} from "react";
+import {SpotifyService} from "../../bindings/drumbot";
+import {useSpotifyWebPlayerApi} from "../spotify-events.ts";
 import {Events, WML} from "@wailsio/runtime";
+import {motion} from "motion/react";
 import {AuthenticationResponse, SpotifyApi} from "@spotify/web-api-ts-sdk";
-import WailsRedirectionStrategy from "./spotify-redirect.ts";
-import {SpotifyService} from "../bindings/drumbot";
-import {motion} from "motion/react"
-import {useSpotifyWebPlayerApi} from "./spotify-events.ts";
+import WailsRedirectionStrategy from "../spotify-redirect.ts";
+import {Note, td50NoteMap} from "../notes.ts";
 
 interface SpotifyState {
     api: SpotifyApi,
@@ -27,37 +28,7 @@ async function doSpotifyAuth(serverPort: number): Promise<SpotifyState> {
     };
 }
 
-interface Note {
-    note: number,
-    velocity: number,
-}
-
-const td50NoteMap: { [key: number]: string } = {
-    26: "Hi-Hat Edge",
-    33: "AUX EDGE",
-    34: "AUX",
-    36: "Kick",
-    37: "Snare X-Stick",
-    38: "Snare",
-    39: "Tom 3 Rim",
-    40: "Snare Rim",
-    41: "Tom 3",
-    43: "Tom 2",
-    44: "Hi-Hat Pedal",
-    46: "Hi-Hat",
-    48: "Tom 1",
-    49: "Crash 1",
-    50: "Tom 1 Rim",
-    51: "Ride",
-    52: "Crash 2 Edge",
-    53: "Ride Bell",
-    55: "Crash 1 Edge",
-    57: "Crash 2",
-    58: "Tom 2 Rim",
-    59: "Ride Edge",
-}
-
-function App() {
+function OverlayRoot() {
     const [spotify, setSpotify] = useState<SpotifyState | null>(null);
     const doSpotifyLogin = () => {
         (async () => {
@@ -144,7 +115,7 @@ function App() {
 
     return (
         <>
-            <div className="App">
+            <div className="Overlay">
                 <div>
                     {!!spotify || <button onClick={doSpotifyLogin}>Spotify</button>}
                     <button onClick={() => setAllNotes([])}>Reset</button>
@@ -198,4 +169,4 @@ const NoteView = (props: { name: string, noteCount: number, lastVelocity: number
     );
 };
 
-export default App
+export default OverlayRoot

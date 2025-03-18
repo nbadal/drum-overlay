@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/wailsapp/wails/v3/pkg/application"
 	"gitlab.com/gomidi/midi/v2"
 	_ "gitlab.com/gomidi/midi/v2/drivers/rtmididrv"
 	"time"
@@ -12,7 +13,31 @@ type NoteEvent struct {
 	Velocity uint8
 }
 
-func CollectMidiEvents(noteEvents chan NoteEvent) (func(), error) {
+func StartMidiHandler(app *application.App) {
+	// Start listening to all MIDI notes
+	noteEvents := make(chan NoteEvent, 100)
+	stopMidiChan := make(chan func())
+
+	go func() {
+		stopMidi, err := collectMidiEvents(noteEvents)
+		if err != nil {
+			fmt.Printf("MIDI ERROR: %s\n", err)
+			return
+		}
+		stopMidiChan <- stopMidi
+	}()
+
+	go func() {
+		for {
+			select {
+			case noteEvent := <-noteEvents:
+				app.EmitEvent("note", noteEvent)
+			}
+		}
+	}()
+}
+
+func collectMidiEvents(noteEvents chan NoteEvent) (func(), error) {
 	var stop func()
 
 	for {
