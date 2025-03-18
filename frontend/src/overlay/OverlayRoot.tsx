@@ -1,107 +1,42 @@
 import {useEffect, useState} from "react";
-import {SpotifyService} from "../../bindings/drumbot";
-import {useSpotifyWebPlayerApi} from "../spotify-events.ts";
-import {Events, WML} from "@wailsio/runtime";
+import {Events} from "@wailsio/runtime";
 import {motion} from "motion/react";
-import {AuthenticationResponse, SpotifyApi} from "@spotify/web-api-ts-sdk";
-import WailsRedirectionStrategy from "../spotify-redirect.ts";
 import {Note, td50NoteMap} from "../notes.ts";
-
-interface SpotifyState {
-    api: SpotifyApi,
-    auth: AuthenticationResponse,
-}
-
-async function doSpotifyAuth(serverPort: number): Promise<SpotifyState> {
-    const api = SpotifyApi.withUserAuthorization(
-        "cdc7f38bf9b84bc9aab2e78461d91638",
-        `http://127.0.0.1:${serverPort}/spotify-callback`,
-        ["user-read-private", "user-read-email", "user-read-playback-state", "user-modify-playback-state", "streaming"],
-        {
-            redirectionStrategy: new WailsRedirectionStrategy(),
-        }
-    );
-    const auth = await api.authenticate();
-    return {
-        api: api,
-        auth: auth,
-    };
-}
+import {useSpotifyState} from "./SpotifyAuthState.tsx";
+import {ControlsProvider} from "./ControlsContext.tsx";
 
 function OverlayRoot() {
-    const [spotify, setSpotify] = useState<SpotifyState | null>(null);
-    const doSpotifyLogin = () => {
-        (async () => {
-            if (spotify) {
-                // Already authenticated
-                return;
-            }
-            const serverPort = await SpotifyService.StartCallbackServer();
-            console.log("Server started on port: " + serverPort);
+    return (
+        <ControlsProvider>
+            <OverlayContent/>
+        </ControlsProvider>);
+}
 
-            const api = await doSpotifyAuth(serverPort);
-            setSpotify(api);
-        })().then(() => {
-                console.log("Spotify Auth Started");
-            }
-        ).catch((err: any) => {
-                console.log(err);
-            }
-        );
-    }
-    const [spotifyPlayer, playbackState] = useSpotifyWebPlayerApi(spotify?.auth?.accessToken?.access_token);
-
+function OverlayContent() {
     const [allNotes, setAllNotes] = useState<Note[]>([]);
 
     useEffect(() => {
-        console.log("Setting up event listeners");
         Events.On('note', (timeValue: any) => {
             setAllNotes(prev => [...prev, {
                 note: timeValue.data[0].Note,
                 velocity: timeValue.data[0].Velocity
             }]);
         });
-        Events.On('spotify-callback', (data: any) => {
-            console.log("Spotify Callback", data);
-            console.log("Spotify Code", data.data[0].code);
-            console.log("Spotify Port", data.data[0].originalPort);
-
-            // Inject the `code` into our query string
-            const url = new URL(window.location.href);
-            url.searchParams.set('code', data.data[0].code);
-            window.history.pushState({}, '', url.toString());
-
-            // Re-authenticate with Spotify
-            doSpotifyAuth(data.data[0].originalPort).then((api) => {
-                    console.log("Re-authenticated with Spotify");
-                    // Clear the code from the query string
-                    url.searchParams.delete('code');
-                    window.history.pushState({}, '', url.toString());
-
-                    setSpotify(api);
-                }
-            ).catch(
-                (err: any) => console.log(err)
-            );
-        });
-        // Reload WML so it picks up the wml tags
-        WML.Reload();
-
         return () => {
-            console.log("Removing event listeners");
             Events.Off('note');
-            Events.Off('spotify-callback');
         }
     }, []);
 
+    const [, spotifyPlayer] = useSpotifyState();
+
     const [trackingSong, setTrackingSong] = useState<string | null>(null);
     useEffect(() => {
-        const song = playbackState?.track_window.current_track.id;
+        const song = spotifyPlayer?.playbackState?.track_window.current_track.id;
         if (song && song !== trackingSong) {
             setTrackingSong(song);
             console.log("Now tracking song:", song);
         }
-    }, [playbackState]);
+    }, [spotifyPlayer?.playbackState]);
 
     useEffect(() => {
         // Each time the tracking song changes, print totals, reset.
@@ -116,18 +51,14 @@ function OverlayRoot() {
     return (
         <>
             <div className="Overlay">
-                <div>
-                    {!!spotify || <button onClick={doSpotifyLogin}>Spotify</button>}
-                    <button onClick={() => setAllNotes([])}>Reset</button>
-                </div>
                 {spotifyPlayer && (
                     <div>Player Connected!</div>
                 )}
-                {playbackState && (
+                {spotifyPlayer?.playbackState && (
                     <div>
-                        <div>Playing: {playbackState.track_window.current_track.name}</div>
-                        <div>Artist: {playbackState.track_window.current_track.artists[0].name}</div>
-                        <div>Progress: {playbackState.position} / {playbackState.duration}</div>
+                        <div>Playing: {spotifyPlayer?.playbackState.track_window.current_track.name}</div>
+                        <div>Artist: {spotifyPlayer?.playbackState.track_window.current_track.artists[0].name}</div>
+                        <div>Progress: {spotifyPlayer?.playbackState.position} / {spotifyPlayer?.playbackState.duration}</div>
                     </div>
                 )}
                 <div className="notes">
