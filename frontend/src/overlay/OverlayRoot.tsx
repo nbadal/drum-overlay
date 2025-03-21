@@ -22,8 +22,12 @@ function OverlayContent() {
                 velocity: timeValue.data[0].Velocity
             }]);
         });
+        Events.On('control-reset-notes', () => {
+            setAllNotes([]);
+        });
         return () => {
             Events.Off('note');
+            Events.Off('control-reset-notes');
         }
     }, []);
 
