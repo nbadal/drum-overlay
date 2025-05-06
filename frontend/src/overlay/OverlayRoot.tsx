@@ -2,14 +2,15 @@ import {useEffect, useState} from "react";
 import {Events} from "@wailsio/runtime";
 import {motion} from "motion/react";
 import {Note, td50NoteMap} from "../notes.ts";
-import {useSpotifyState} from "./SpotifyAuthState.tsx";
-import {ControlsProvider} from "./ControlsContext.tsx";
+import {useAudioPlayback} from "../hooks/useAudioPlayback.ts";
+import {PlaybackTrack} from "../audio/types.ts";
+import {useAudioAuth} from "../hooks/useAudioAuth.ts";
+import {ControlsState} from "../controls/state.ts";
 
 function OverlayRoot() {
     return (
-        <ControlsProvider>
-            <OverlayContent/>
-        </ControlsProvider>);
+        <OverlayContent/>
+    );
 }
 
 function OverlayContent() {
@@ -31,16 +32,17 @@ function OverlayContent() {
         }
     }, []);
 
-    const [, spotifyPlayer] = useSpotifyState();
+    const {credentials} = useAudioAuth();
+    const {sourceManager, activePlaybackState, playbackStates} = useAudioPlayback(credentials);
 
-    const [trackingSong, setTrackingSong] = useState<string | null>(null);
+    const [trackingSong, setTrackingSong] = useState<PlaybackTrack | null>(null);
     useEffect(() => {
-        const song = spotifyPlayer?.playbackState?.track_window.current_track.id;
+        const song = activePlaybackState?.currentTrack;
         if (song && song !== trackingSong) {
             setTrackingSong(song);
-            console.log("Now tracking song:", song);
+            console.log("Now tracking song:", song.name);
         }
-    }, [spotifyPlayer?.playbackState]);
+    }, [activePlaybackState]);
 
     useEffect(() => {
         // Each time the tracking song changes, print totals, reset.
@@ -52,17 +54,55 @@ function OverlayContent() {
         setAllNotes([]);
     }, [trackingSong]);
 
+    // Push state updates to controls window
+    useEffect(() => {
+        const state: ControlsState = {
+            audioSources: {}
+        };
+
+        // Get all sources
+        const sources = sourceManager.getSources();
+
+        // For each source, use the playback state from the hook
+        for (const source of sources) {
+            state.audioSources[source.name] = {
+                isConnected: source.isConnected,
+                playbackState: playbackStates[source.name] || null
+            };
+        }
+
+        // Emit state update to controls window
+        Events.Emit({
+            name: 'controls-state-update',
+            data: state
+        });
+    }, [sourceManager, playbackStates]);
+
+    // Handle connect requests from controls
+    useEffect(() => {
+        Events.On('control-source-connect', async (data: any) => {
+            const sourceName = data.data.sourceName;
+            try {
+                await sourceManager.connectSource(sourceName);
+            } catch (error) {
+                console.error(`Failed to connect to ${sourceName}:`, error);
+            }
+        });
+
+        return () => {
+            Events.Off('control-source-connect');
+        };
+    }, [sourceManager]);
+
+
     return (
         <>
             <div className="Overlay">
-                {spotifyPlayer && (
-                    <div>Player Connected!</div>
-                )}
-                {spotifyPlayer?.playbackState && (
+                {activePlaybackState && (
                     <div>
-                        <div>Playing: {spotifyPlayer?.playbackState.track_window.current_track.name}</div>
-                        <div>Artist: {spotifyPlayer?.playbackState.track_window.current_track.artists[0].name}</div>
-                        <div>Progress: {spotifyPlayer?.playbackState.position} / {spotifyPlayer?.playbackState.duration}</div>
+                        <div>Playing: {activePlaybackState.currentTrack?.name}</div>
+                        <div>Artist: {activePlaybackState.currentTrack?.artist}</div>
+                        <div>Progress: {activePlaybackState.position} / {activePlaybackState.duration}</div>
                     </div>
                 )}
                 <div className="notes">

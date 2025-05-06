@@ -1,15 +1,14 @@
 import {LinearProgress} from "@mui/material";
 import {useEffect, useState} from "react";
+import {PlaybackState} from "../audio/types.ts";
 
-export function PlaybackStatusControl(props: { playbackState: Spotify.PlaybackState | null }) {
+export function PlaybackStatusControl(props: { playbackState: PlaybackState | null }) {
     if (!props.playbackState) {
         return <div>Playback Status: Not Playing</div>;
     }
 
     // Pick largest thumbnail
-    const albumArtUrl = props.playbackState.track_window.current_track.album.images.sort(
-        (a, b) => (b.width ?? 0) - (a.width ?? 0)
-    )[0].url;
+    const albumArtUrl = props.playbackState.currentTrack?.albumArtUrl;
 
     return (
         <div style={{
@@ -21,7 +20,7 @@ export function PlaybackStatusControl(props: { playbackState: Spotify.PlaybackSt
         }}>
             <img
                 src={albumArtUrl}
-                alt={props.playbackState.track_window.current_track.album.name}
+                alt={props.playbackState.currentTrack?.albumName}
                 style={{
                     width: 64,
                     height: 64,
@@ -38,10 +37,10 @@ export function PlaybackStatusControl(props: { playbackState: Spotify.PlaybackSt
                 <div style={{
                     fontWeight: "bold",
                 }}>
-                    {props.playbackState.track_window.current_track.name}
+                    {props.playbackState.currentTrack?.name}
                 </div>
                 <div>
-                    {props.playbackState.track_window.current_track.artists[0].name}
+                    {props.playbackState.currentTrack?.artist}
                 </div>
                 <SongProgress playbackState={props.playbackState}/>
             </div>
@@ -49,7 +48,7 @@ export function PlaybackStatusControl(props: { playbackState: Spotify.PlaybackSt
     );
 }
 
-function SongProgress({playbackState}: { playbackState: Spotify.PlaybackState }) {
+function SongProgress({playbackState}: { playbackState: PlaybackState }) {
     // TODO: Figure out why we can't trust the server timestamp, we shouldn't be using our own clock.
     const [currentTimestamp, setCurrentTimestamp] = useState(Date.now());
 
@@ -61,7 +60,7 @@ function SongProgress({playbackState}: { playbackState: Spotify.PlaybackState })
         return () => clearInterval(intervalId);
     }, []);
 
-    const elapsed = currentTimestamp - playbackState.timestamp + playbackState.position;
+    const elapsed = currentTimestamp - playbackState.startedTimestamp + playbackState.position;
     const progress = (elapsed / playbackState.duration) * 100;
 
     return (
