@@ -53,12 +53,18 @@ function SongProgress({playbackState}: { playbackState: PlaybackState }) {
     const [currentTimestamp, setCurrentTimestamp] = useState(Date.now());
 
     useEffect(() => {
+        // If song isn't playing, don't update the timestamp
+        if (!playbackState.isPlaying) {
+            return;
+        }
+
+        setCurrentTimestamp(Date.now());
         const intervalId = setInterval(() => {
             setCurrentTimestamp(Date.now());
         }, 1000);
 
         return () => clearInterval(intervalId);
-    }, []);
+    }, [playbackState]);
 
     const elapsed = currentTimestamp - playbackState.startedTimestamp + playbackState.position;
     const progress = (elapsed / playbackState.duration) * 100;
