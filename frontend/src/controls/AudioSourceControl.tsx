@@ -2,20 +2,30 @@ import {MusicNote} from "@mui/icons-material";
 import React from "react";
 import Button from "@mui/material/Button";
 import {PlaybackStatusControl} from "./PlaybackStatusControl.tsx";
-import {AudioSourceControlState} from "./state.ts";
+import {ProviderControlState} from "./state.ts";
 
 interface AudioSourceControlProps {
     name: string;
-    state: AudioSourceControlState;
-    onConnectRequest: () => void;
+    state: ProviderControlState;
+    onClick: () => void;
 }
 
-export function AudioSourceControl({name, state, onConnectRequest}: AudioSourceControlProps) {
+export function AudioSourceControl({name, state, onClick}: AudioSourceControlProps) {
+    // Determine button text based on connection and auth state
+    let buttonText = name;
+    if (state.isConnected) {
+        buttonText += " Connected";
+    } else if (!state.hasCredentials) {
+        buttonText += " Login";
+    } else {
+        buttonText += " Connect";
+    }
+
     return (
         <div className="audio-source-control">
             <ControlsButton
-                text={`${name}${state.isConnected ? " Connected" : ""}`}
-                onClick={onConnectRequest}
+                text={buttonText}
+                onClick={onClick}
                 disabled={state.isConnected}
                 icon={<MusicNote/>}
             />

@@ -1,15 +1,26 @@
-import { useEffect, useState } from 'react';
+import {useEffect, useState} from 'react';
 import {SourceAuthManager} from "../audio/SourceAuthManager.ts";
 import {SpotifyAuthStrategy} from "../audio/spotify/auth.ts";
-import {AuthCredentials} from "../audio/types.ts";
+import {AudioProvider, AuthCredentials} from "../audio/types.ts";
 import {Events} from "@wailsio/runtime";
 
 export function useAudioAuth() {
+    const [credentials, setCredentials] = useState<{
+        [source in AudioProvider]: AuthCredentials | null;
+    }>({
+        [AudioProvider.Spotify]: null,
+    });
+
     const [authManager] = useState(() => {
         const manager = new SourceAuthManager();
         manager.registerStrategy(new SpotifyAuthStrategy({
-            onAuthStateChange: (credentials) => {
-                // Handle auth state changes
+            onAuthStateChange: (spotifyCreds) => {
+                console.log('Spotify auth state changed:', credentials);
+                if (spotifyCreds) {
+                    setCredentials(prev => ({...prev, ['Spotify']: spotifyCreds}));
+                } else {
+                    setCredentials(prev => ({...prev, ['Spotify']: null}));
+                }
             },
             onError: (error) => {
                 console.error('Auth error:', error);
@@ -18,40 +29,40 @@ export function useAudioAuth() {
         return manager;
     });
 
-    const [credentials, setCredentials] = useState<Record<string, AuthCredentials>>({});
-
+    // Initialize with any existing credentials
     useEffect(() => {
-        // Initialize with any existing credentials
-        const allCreds: Record<string, AuthCredentials> = {};
-        ['Spotify'].forEach(name => {
-            const creds = authManager.getCredentials(name);
+        const allCreds: { [source in AudioProvider]: AuthCredentials | null; } = {
+            [AudioProvider.Spotify]: null,
+        }
+        for (const source in AudioProvider) {
+            const creds = authManager.getCredentials(source);
             if (creds) {
-                allCreds[name] = creds;
+                allCreds[source] = creds;
             }
-        });
+        }
         setCredentials(allCreds);
     }, [authManager]);
 
-    // Add event listener for control-spotify-connect
+    // Add event listener for control-source-auth
     useEffect(() => {
-        Events.On('control-spotify-connect', async () => {
-            console.log("Starting Spotify Auth");
+        Events.On('control-source-auth', async (data: any) => {
+            const sourceName = data.data.sourceName;
+            console.log(`Starting ${sourceName} Auth`);
             try {
-                if (!authManager.isAuthenticated('Spotify')) {
-                    await authManager.authenticate('Spotify');
+                if (!authManager.isAuthenticated(sourceName)) {
+                    await authManager.authenticate(sourceName);
                 } else {
-                    console.log("Already authenticated with Spotify");
+                    console.log(`Already authenticated with ${sourceName}`);
                 }
             } catch (error) {
-                console.error('Failed to authenticate with Spotify:', error);
+                console.error(`Failed to authenticate with ${sourceName}:`, error);
             }
         });
 
         return () => {
-            Events.Off('control-spotify-connect');
+            Events.Off('control-source-auth');
         };
     }, [authManager]);
-
 
     return {
         authManager,
@@ -59,12 +70,12 @@ export function useAudioAuth() {
         isAuthenticated: (source: string) => authManager.isAuthenticated(source),
         authenticate: async (source: string) => {
             const creds = await authManager.authenticate(source);
-            setCredentials(prev => ({ ...prev, [source]: creds }));
+            setCredentials(prev => ({...prev, [source]: creds}));
         },
         disconnect: async (source: string) => {
             await authManager.disconnect(source);
             setCredentials(prev => {
-                const next = { ...prev };
+                const next = {...prev};
                 delete next[source];
                 return next;
             });

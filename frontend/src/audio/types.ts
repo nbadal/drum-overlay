@@ -1,3 +1,9 @@
+// SOURCES
+
+export enum AudioProvider {
+    Spotify = 'Spotify',
+}
+
 // PLAYBACK
 
 export interface PlaybackTrack {
@@ -18,7 +24,7 @@ export interface PlaybackState {
 }
 
 export interface PlaybackSource {
-    name: string;
+    provider: AudioProvider;
     isConnected: boolean;
     connect(): Promise<void>;
     disconnect(): Promise<void>;
@@ -42,7 +48,7 @@ export interface AuthCredentials {
 }
 
 export interface AuthStrategy {
-    readonly name: string;
+    readonly provider: AudioProvider;
     authenticate(): Promise<AuthCredentials>;
     disconnect(): Promise<void>;
     isAuthenticated(): boolean;

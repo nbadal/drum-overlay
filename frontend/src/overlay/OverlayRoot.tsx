@@ -3,9 +3,9 @@ import {Events} from "@wailsio/runtime";
 import {motion} from "motion/react";
 import {Note, td50NoteMap} from "../notes.ts";
 import {useAudioPlayback} from "../hooks/useAudioPlayback.ts";
-import {PlaybackTrack} from "../audio/types.ts";
+import {AudioProvider, PlaybackTrack} from "../audio/types.ts";
 import {useAudioAuth} from "../hooks/useAudioAuth.ts";
-import {ControlsState} from "../controls/state.ts";
+import {ControlsState, ControlsStateDefault} from "../controls/state.ts";
 
 function OverlayRoot() {
     return (
@@ -33,7 +33,7 @@ function OverlayContent() {
     }, []);
 
     const {credentials} = useAudioAuth();
-    const {sourceManager, activePlaybackState, playbackStates} = useAudioPlayback(credentials);
+    const {activePlaybackState, playbackStates, playbackSources} = useAudioPlayback(credentials);
 
     const [trackingSong, setTrackingSong] = useState<PlaybackTrack | null>(null);
     useEffect(() => {
@@ -54,46 +54,33 @@ function OverlayContent() {
         setAllNotes([]);
     }, [trackingSong]);
 
-    // Push state updates to controls window
+    const [controlsState, setControlsState] = useState<ControlsState>(ControlsStateDefault);
+
+    // Push updates to controls window
     useEffect(() => {
-        const state: ControlsState = {
-            audioSources: {}
-        };
+        setControlsState(prev => {
+            const newStates = {...prev.providerStates};
+            for (const provider of Object.values(AudioProvider)) {
+                const playback = playbackStates.get(provider);
+                const source = playbackSources.get(provider);
+                const creds = credentials[provider];
+                newStates[provider] = {
+                    playbackState: playback || null,
+                    isConnected: source?.isConnected || false,
+                    hasCredentials: !!creds,
+                };
+            }
+            return ({...prev, providerStates: newStates});
+        })
+    }, [playbackStates, playbackSources, credentials]);
 
-        // Get all sources
-        const sources = sourceManager.getSources();
-
-        // For each source, use the playback state from the hook
-        for (const source of sources) {
-            state.audioSources[source.name] = {
-                isConnected: source.isConnected,
-                playbackState: playbackStates[source.name] || null
-            };
-        }
-
-        // Emit state update to controls window
+    // Emit controls state update to controls window
+    useEffect(() => {
         Events.Emit({
             name: 'controls-state-update',
-            data: state
+            data: controlsState
         });
-    }, [sourceManager, playbackStates]);
-
-    // Handle connect requests from controls
-    useEffect(() => {
-        Events.On('control-source-connect', async (data: any) => {
-            const sourceName = data.data.sourceName;
-            try {
-                await sourceManager.connectSource(sourceName);
-            } catch (error) {
-                console.error(`Failed to connect to ${sourceName}:`, error);
-            }
-        });
-
-        return () => {
-            Events.Off('control-source-connect');
-        };
-    }, [sourceManager]);
-
+    }, [controlsState]);
 
     return (
         <>

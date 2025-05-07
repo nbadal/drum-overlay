@@ -1,8 +1,8 @@
 import React, {useEffect, useState} from "react";
 import {Events} from "@wailsio/runtime";
-import {ControlsState, ControlsStateDefault} from "./state.ts";
+import {ControlsState, ControlsStateDefault, ProviderControlState} from "./state.ts";
 import Button from "@mui/material/Button";
-import { AudioSourceControl } from "./AudioSourceControl.tsx";
+import {AudioSourceControl} from "./AudioSourceControl.tsx";
 
 function ControlsRoot() {
     const [controlsState, setControlsState] = useState<ControlsState>(ControlsStateDefault);
@@ -17,26 +17,38 @@ function ControlsRoot() {
         };
     }, []);
 
-    const requestConnect = async (sourceName: string) => {
-        await Events.Emit({
-            name: 'control-source-connect',
-            data: { sourceName }
-        });
+    const handleSourceAction = async (sourceName: string) => {
+        const providerState: ProviderControlState = controlsState.providerStates[sourceName];
+
+        if (!providerState.hasCredentials) {
+            await Events.Emit({
+                name: 'control-source-auth',
+                data: {sourceName}
+            });
+        } else if (!providerState.isConnected) {
+            await Events.Emit({
+                name: 'control-source-connect',
+                data: {sourceName}
+            });
+        } else {
+            // Already connected, do nothing
+        }
     };
 
     return (
         <div className="Controls">
-            {Object.entries(controlsState.audioSources).map(([sourceName, sourceState]) => (
-                <AudioSourceControl
-                    key={sourceName}
-                    name={sourceName}
-                    state={sourceState}
-                    onConnectRequest={() => requestConnect(sourceName)}
-                />
-            ))}
+            {Object.entries(controlsState.providerStates)
+                .map(([sourceName, sourceState]) => (
+                    <AudioSourceControl
+                        key={sourceName}
+                        name={sourceName}
+                        state={sourceState}
+                        onClick={() => handleSourceAction(sourceName)}
+                    />
+                ))}
             <ControlsButton
                 text="Reset Notes"
-                onClick={() => Events.Emit({ name: 'control-reset-notes', data: {} })}
+                onClick={() => Events.Emit({name: 'control-reset-notes', data: {}})}
             />
         </div>
     );

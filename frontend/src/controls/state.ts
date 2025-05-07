@@ -1,14 +1,23 @@
-import {PlaybackState} from "../audio/types.ts";
+import {AudioProvider, PlaybackState} from "../audio/types.ts";
 
-export interface AudioSourceControlState {
+export interface ProviderControlState {
     isConnected: boolean;
+    hasCredentials: boolean;
     playbackState: PlaybackState | null;
 }
 
 export interface ControlsState {
-    audioSources: Record<string, AudioSourceControlState>;
+    providerStates: Record<AudioProvider, ProviderControlState>;
+}
+
+export const ControlsStateInitial: ProviderControlState = {
+    isConnected: false,
+    hasCredentials: false,
+    playbackState: null,
 }
 
 export const ControlsStateDefault: ControlsState = {
-    audioSources: {}
+    providerStates: {
+        [AudioProvider.Spotify]: ControlsStateInitial
+    }
 };

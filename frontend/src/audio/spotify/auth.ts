@@ -1,4 +1,4 @@
-import { AuthStrategy, AuthCredentials, AuthEvents } from '../types.ts';
+import {AuthStrategy, AuthCredentials, AuthEvents, AudioProvider} from '../types.ts';
 import { SpotifyApi, AuthenticationResponse } from "@spotify/web-api-ts-sdk";
 import { Events } from "@wailsio/runtime";
 import {SpotifyService} from "../../../bindings/drumbot";
@@ -13,8 +13,8 @@ export class SpotifyAuthStrategy implements AuthStrategy {
         this.events = events;
     }
 
-    get name(): string {
-        return 'Spotify';
+    get provider(): AudioProvider {
+        return AudioProvider.Spotify;
     }
 
     isAuthenticated(): boolean {
@@ -73,7 +73,7 @@ export class SpotifyAuthStrategy implements AuthStrategy {
 
     private convertAuthResponse(auth: AuthenticationResponse): AuthCredentials {
         return {
-            accessToken: auth.accessToken,
+            accessToken: auth.accessToken.access_token,
         };
     }
 }

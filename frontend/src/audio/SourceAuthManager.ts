@@ -5,7 +5,7 @@ export class SourceAuthManager {
     private credentials = new Map<string, AuthCredentials>();
 
     registerStrategy(strategy: AuthStrategy) {
-        this.strategies.set(strategy.name, strategy);
+        this.strategies.set(strategy.provider, strategy);
     }
 
     async authenticate(strategyName: string): Promise<AuthCredentials> {

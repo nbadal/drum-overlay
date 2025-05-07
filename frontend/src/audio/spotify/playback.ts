@@ -1,4 +1,4 @@
-import {PlaybackSource, PlaybackEvents, PlaybackState} from '../types.ts';
+import {PlaybackSource, PlaybackEvents, PlaybackState, AudioProvider} from '../types.ts';
 
 export class SpotifyPlayback implements PlaybackSource {
     private player: Spotify.Player | null = null;
@@ -11,8 +11,8 @@ export class SpotifyPlayback implements PlaybackSource {
         this.token = token;
     }
 
-    get name(): string {
-        return 'Spotify';
+    get provider(): AudioProvider {
+        return AudioProvider.Spotify;
     }
 
     get isConnected(): boolean {
@@ -20,13 +20,6 @@ export class SpotifyPlayback implements PlaybackSource {
     }
 
     async connect(): Promise<void> {
-        // Check if we have a valid token
-        if (!this.token) {
-            const error = new Error('Cannot connect to Spotify: No authentication token available');
-            this.events.onError?.(error);
-            throw error;
-        }
-
         // Load Spotify SDK script if not already loaded
         if (!window.Spotify) {
             await this.loadSpotifyScript();
