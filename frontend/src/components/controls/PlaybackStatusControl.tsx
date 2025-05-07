@@ -1,6 +1,6 @@
 import {LinearProgress} from "@mui/material";
 import {useEffect, useState} from "react";
-import {PlaybackState} from "../audio/types.ts";
+import {PlaybackState} from "../../audio/types.ts";
 
 export function PlaybackStatusControl(props: { playbackState: PlaybackState | null }) {
     if (!props.playbackState) {

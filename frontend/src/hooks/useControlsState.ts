@@ -1,5 +1,5 @@
 import {useEffect, useState} from "react";
-import {ControlsState, ControlsStateDefault, ProviderControlState} from "../controls/state.ts";
+import {ControlsState, ControlsStateDefault, ProviderControlState} from "../components/controls/state.ts";
 import {Events} from "@wailsio/runtime";
 import {sourcePlaybackManager} from "../audio/SourcePlaybackManager.ts";
 import {AudioProvider, PlaybackState} from "../audio/types.ts";

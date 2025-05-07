@@ -1,4 +1,4 @@
-import {AudioProvider, PlaybackState} from "../audio/types.ts";
+import {AudioProvider, PlaybackState} from "../../audio/types.ts";
 
 export interface ProviderControlState {
     isConnected: boolean;

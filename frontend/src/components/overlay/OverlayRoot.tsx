@@ -1,11 +1,11 @@
 import {motion} from "motion/react";
-import {td50NoteMap} from "../notes.ts";
-import {useAudioPlayback} from "../hooks/useAudioPlayback.ts";
-import {AudioProvider} from "../audio/types.ts";
-import {useAudioAuth} from "../hooks/useAudioAuth.ts";
-import {sourcePlaybackManager} from "../audio/SourcePlaybackManager.ts";
-import {useControlsState} from "../hooks/useControlsState.ts";
-import {useMidiNotes} from "../hooks/useMidiNotes.ts";
+import {td50NoteMap} from "../../notes.ts";
+import {useAudioPlayback} from "../../hooks/useAudioPlayback.ts";
+import {AudioProvider} from "../../audio/types.ts";
+import {useAudioAuth} from "../../hooks/useAudioAuth.ts";
+import {sourcePlaybackManager} from "../../audio/SourcePlaybackManager.ts";
+import {useControlsState} from "../../hooks/useControlsState.ts";
+import {useMidiNotes} from "../../hooks/useMidiNotes.ts";
 
 function OverlayRoot() {
     const credentials = useAudioAuth();
