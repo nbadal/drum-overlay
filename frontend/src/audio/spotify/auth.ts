@@ -1,6 +1,6 @@
-import {AuthStrategy, AuthCredentials, AuthEvents, AudioProvider} from '../types.ts';
-import { SpotifyApi, AuthenticationResponse } from "@spotify/web-api-ts-sdk";
-import { Events } from "@wailsio/runtime";
+import {AudioProvider, AuthCredentials, AuthEvents, AuthStrategy} from '../types.ts';
+import {AuthenticationResponse, SpotifyApi} from "@spotify/web-api-ts-sdk";
+import {Events} from "@wailsio/runtime";
 import {SpotifyService} from "../../../bindings/drumbot";
 import SpotifyWailsRedirectionStrategy from "./spotify-redirect.ts";
 

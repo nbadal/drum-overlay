@@ -1,4 +1,4 @@
-import { AuthStrategy, AuthCredentials, AudioProvider } from './types';
+import {AudioProvider, AuthCredentials, AuthStrategy} from './types';
 
 class SourceAuthManager {
     private strategies = new Map<AudioProvider, AuthStrategy>();

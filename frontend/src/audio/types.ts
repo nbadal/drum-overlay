@@ -26,10 +26,15 @@ export interface PlaybackState {
 export interface PlaybackSource {
     provider: AudioProvider;
     isConnected: boolean;
+
     connect(): Promise<void>;
+
     disconnect(): Promise<void>;
+
     getPlaybackState(): Promise<PlaybackState>;
+
     play(trackId: string): Promise<void>;
+
     // pause(): Promise<void>;
     // resume(): Promise<void>;
     // seek(position: number): Promise<void>;
@@ -49,7 +54,9 @@ export interface AuthCredentials {
 
 export interface AuthStrategy {
     readonly provider: AudioProvider;
+
     authenticate(): Promise<AuthCredentials>;
+
     disconnect(): Promise<void>;
 }
 

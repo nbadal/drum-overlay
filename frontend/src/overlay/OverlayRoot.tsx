@@ -34,7 +34,8 @@ function OverlayContent() {
     }, []);
 
     const {credentials} = useAudioAuth();
-    const {activePlaybackState, playbackStates} = useAudioPlayback(credentials);
+    const {playbackStates} = useAudioPlayback(credentials);
+    const activePlaybackState = playbackStates.get(sourcePlaybackManager.getActiveProvider() || AudioProvider.Spotify);
 
     const [trackingSong, setTrackingSong] = useState<PlaybackTrack | null>(null);
     useEffect(() => {
@@ -57,24 +58,39 @@ function OverlayContent() {
 
     const [controlsState, setControlsState] = useState<ControlsState>(ControlsStateDefault);
 
-    // Push updates to controls window
+    // Listen for source connection changes
     useEffect(() => {
-        setControlsState(prev => {
-            const newStates = {...prev.providerStates};
-            for (const provider of Object.values(AudioProvider)) {
-                const playback = playbackStates.get(provider);
-                const source = sourcePlaybackManager.getPlaybackSources().get(provider);
-                const creds = credentials[provider];
-                console.log("Provider:", provider, "Playback:", playback, "Source:", source, "Credentials:", creds);
-                const state: ProviderControlState = {
-                    playbackState: playback || null,
-                    isConnected: source?.isConnected || false,
-                    hasCredentials: !!creds,
-                };
-                newStates[provider] = state;
-            }
-            return ({...prev, providerStates: newStates});
-        })
+        const updateControlsState = () => {
+            setControlsState(prev => {
+                const newStates = {...prev.providerStates};
+                for (const provider of Object.values(AudioProvider)) {
+                    const playback = playbackStates.get(provider);
+                    const source = sourcePlaybackManager.getPlaybackSources().get(provider);
+                    const creds = credentials[provider];
+                    console.log("Provider:", provider, "Playback:", playback, "Source:", source, "Credentials:", creds);
+                    const state: ProviderControlState = {
+                        playbackState: playback || null,
+                        isConnected: source?.isConnected || false,
+                        hasCredentials: !!creds,
+                    };
+                    newStates[provider] = state;
+                }
+                return ({...prev, providerStates: newStates});
+            });
+        };
+
+        // Listen for source connection changes
+        Events.On('source-connection-change', (data: any) => {
+            console.log('Source connection changed:', data);
+            updateControlsState();
+        });
+
+        // Initial update
+        updateControlsState();
+
+        return () => {
+            Events.Off('source-connection-change');
+        };
     }, [playbackStates, credentials]);
 
     // Emit controls state update to controls window

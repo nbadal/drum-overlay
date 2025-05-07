@@ -47,7 +47,7 @@ export function useAudioPlayback(credentials: { [source in AudioProvider]: AuthC
             .catch(console.error);
 
         return () => {
-            spotifySource.disconnect().catch(console.error);
+            sourcePlaybackManager.disconnect(AudioProvider.Spotify).catch(console.error);
         };
     }, [credentials]);
 
@@ -68,6 +68,5 @@ export function useAudioPlayback(credentials: { [source in AudioProvider]: AuthC
 
     return {
         playbackStates,
-        activePlaybackState: activeSource ? playbackStates.get(activeSource) ?? null : null
     };
 }

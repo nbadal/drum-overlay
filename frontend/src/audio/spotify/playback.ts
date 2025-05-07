@@ -1,4 +1,4 @@
-import {PlaybackSource, PlaybackEvents, PlaybackState, AudioProvider} from '../types.ts';
+import {AudioProvider, PlaybackEvents, PlaybackSource, PlaybackState} from '../types.ts';
 
 export class SpotifyPlayback implements PlaybackSource {
     private player: Spotify.Player | null = null;
