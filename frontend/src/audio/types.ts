@@ -51,7 +51,6 @@ export interface AuthStrategy {
     readonly provider: AudioProvider;
     authenticate(): Promise<AuthCredentials>;
     disconnect(): Promise<void>;
-    isAuthenticated(): boolean;
 }
 
 export interface AuthEvents {

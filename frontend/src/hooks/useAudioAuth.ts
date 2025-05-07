@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react';
-import {SourceAuthManager} from "../audio/SourceAuthManager.ts";
+import {sourceAuthManager} from "../audio/SourceAuthManager.ts";
 import {SpotifyAuthStrategy} from "../audio/spotify/auth.ts";
 import {AudioProvider, AuthCredentials} from "../audio/types.ts";
 import {Events} from "@wailsio/runtime";
@@ -11,9 +11,8 @@ export function useAudioAuth() {
         [AudioProvider.Spotify]: null,
     });
 
-    const [authManager] = useState(() => {
-        const manager = new SourceAuthManager();
-        manager.registerStrategy(new SpotifyAuthStrategy({
+    useEffect(() => {
+        sourceAuthManager.registerStrategy(new SpotifyAuthStrategy({
             onAuthStateChange: (spotifyCreds) => {
                 console.log('Spotify auth state changed:', credentials);
                 if (spotifyCreds) {
@@ -26,31 +25,29 @@ export function useAudioAuth() {
                 console.error('Auth error:', error);
             }
         }));
-        return manager;
-    });
+    }, []);
 
     // Initialize with any existing credentials
     useEffect(() => {
         const allCreds: { [source in AudioProvider]: AuthCredentials | null; } = {
             [AudioProvider.Spotify]: null,
         }
-        for (const source in AudioProvider) {
-            const creds = authManager.getCredentials(source);
+        for (const provider of Object.values(AudioProvider)) {
+            const creds = sourceAuthManager.getCredentials(provider);
             if (creds) {
-                allCreds[source] = creds;
+                allCreds[provider] = creds;
             }
         }
         setCredentials(allCreds);
-    }, [authManager]);
+    }, []);
 
     // Add event listener for control-source-auth
     useEffect(() => {
         Events.On('control-source-auth', async (data: any) => {
             const sourceName = data.data.sourceName;
-            console.log(`Starting ${sourceName} Auth`);
             try {
-                if (!authManager.isAuthenticated(sourceName)) {
-                    await authManager.authenticate(sourceName);
+                if (!sourceAuthManager.isAuthenticated(sourceName)) {
+                    await sourceAuthManager.authenticate(sourceName);
                 } else {
                     console.log(`Already authenticated with ${sourceName}`);
                 }
@@ -62,22 +59,21 @@ export function useAudioAuth() {
         return () => {
             Events.Off('control-source-auth');
         };
-    }, [authManager]);
+    }, []);
 
     return {
-        authManager,
         credentials,
-        isAuthenticated: (source: string) => authManager.isAuthenticated(source),
-        authenticate: async (source: string) => {
-            const creds = await authManager.authenticate(source);
-            setCredentials(prev => ({...prev, [source]: creds}));
+        isAuthenticated: (provider: AudioProvider) => sourceAuthManager.isAuthenticated(provider),
+        authenticate: async (provider: AudioProvider) => {
+            const creds = await sourceAuthManager.authenticate(provider);
+            setCredentials(prev => ({...prev, [provider]: creds}));
         },
-        disconnect: async (source: string) => {
-            await authManager.disconnect(source);
+        disconnect: async (provider: AudioProvider) => {
+            await sourceAuthManager.disconnect(provider);
             setCredentials(prev => {
-                const next = {...prev};
-                delete next[source];
-                return next;
+                const newCreds = {...prev};
+                newCreds[provider] = null;
+                return newCreds;
             });
         }
     };

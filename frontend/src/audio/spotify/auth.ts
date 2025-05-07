@@ -17,10 +17,6 @@ export class SpotifyAuthStrategy implements AuthStrategy {
         return AudioProvider.Spotify;
     }
 
-    isAuthenticated(): boolean {
-        return this.authResponse !== null;
-    }
-
     async authenticate(): Promise<AuthCredentials> {
         console.log("Starting Spotify Auth");
         if (this.authResponse) {

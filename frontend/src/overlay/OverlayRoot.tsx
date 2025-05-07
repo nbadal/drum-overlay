@@ -5,7 +5,8 @@ import {Note, td50NoteMap} from "../notes.ts";
 import {useAudioPlayback} from "../hooks/useAudioPlayback.ts";
 import {AudioProvider, PlaybackTrack} from "../audio/types.ts";
 import {useAudioAuth} from "../hooks/useAudioAuth.ts";
-import {ControlsState, ControlsStateDefault} from "../controls/state.ts";
+import {ControlsState, ControlsStateDefault, ProviderControlState} from "../controls/state.ts";
+import {sourcePlaybackManager} from "../audio/SourcePlaybackManager.ts";
 
 function OverlayRoot() {
     return (
@@ -33,7 +34,7 @@ function OverlayContent() {
     }, []);
 
     const {credentials} = useAudioAuth();
-    const {activePlaybackState, playbackStates, playbackSources} = useAudioPlayback(credentials);
+    const {activePlaybackState, playbackStates} = useAudioPlayback(credentials);
 
     const [trackingSong, setTrackingSong] = useState<PlaybackTrack | null>(null);
     useEffect(() => {
@@ -62,17 +63,19 @@ function OverlayContent() {
             const newStates = {...prev.providerStates};
             for (const provider of Object.values(AudioProvider)) {
                 const playback = playbackStates.get(provider);
-                const source = playbackSources.get(provider);
+                const source = sourcePlaybackManager.getPlaybackSources().get(provider);
                 const creds = credentials[provider];
-                newStates[provider] = {
+                console.log("Provider:", provider, "Playback:", playback, "Source:", source, "Credentials:", creds);
+                const state: ProviderControlState = {
                     playbackState: playback || null,
                     isConnected: source?.isConnected || false,
                     hasCredentials: !!creds,
                 };
+                newStates[provider] = state;
             }
             return ({...prev, providerStates: newStates});
         })
-    }, [playbackStates, playbackSources, credentials]);
+    }, [playbackStates, credentials]);
 
     // Emit controls state update to controls window
     useEffect(() => {

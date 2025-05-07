@@ -1,25 +1,18 @@
 import {useEffect, useState} from 'react';
-import {SourcePlaybackManager as AudioSourceManager} from '../audio/SourcePlaybackManager.ts';
-import {SpotifyPlayback as SpotifyAudioSource} from '../audio/spotify/playback.ts';
+import {SpotifyPlayback} from '../audio/spotify/playback.ts';
 import {AudioProvider, AuthCredentials, PlaybackState} from '../audio/types';
+import {Events} from "@wailsio/runtime";
+import {sourcePlaybackManager} from "../audio/SourcePlaybackManager.ts";
 
 export function useAudioPlayback(credentials: { [source in AudioProvider]: AuthCredentials | null }) {
-    const [sourceManager] = useState(() => new AudioSourceManager());
     const [playbackStates, setPlaybackStates] = useState<Map<AudioProvider, PlaybackState | undefined>>(() => new Map());
     const [activeSource, setActiveSource] = useState<AudioProvider | null>(null);
-
-    // Clean up the source manager when the component is unmounted
-    useEffect(() => {
-        return () => {
-            sourceManager.cleanup();
-        };
-    }, [sourceManager]);
 
     useEffect(() => {
         const spotifyCredentials = credentials[AudioProvider.Spotify];
         if (!spotifyCredentials) return;
 
-        const spotifySource = new SpotifyAudioSource({
+        const spotifySource = new SpotifyPlayback({
             onPlaybackStateChange: (state) => {
                 console.log(`Spotify playback state updated: ${state.isPlaying ? 'playing' : 'paused'}`);
                 setPlaybackStates(prev => {
@@ -46,8 +39,8 @@ export function useAudioPlayback(credentials: { [source in AudioProvider]: AuthC
             }
         }, spotifyCredentials.accessToken);
 
-        sourceManager.registerSource(spotifySource);
-        sourceManager.connect(AudioProvider.Spotify)
+        sourcePlaybackManager.registerSource(spotifySource);
+        sourcePlaybackManager.connect(AudioProvider.Spotify)
             .then(() => {
                 setActiveSource(AudioProvider.Spotify);
             })
@@ -58,11 +51,23 @@ export function useAudioPlayback(credentials: { [source in AudioProvider]: AuthC
         };
     }, [credentials]);
 
+    useEffect(() => {
+        Events.On('control-source-connect', async (data: any) => {
+            const sourceName = data.data.sourceName;
+            try {
+                await sourcePlaybackManager.connect(sourceName);
+            } catch (error) {
+                console.error(`Failed to connect to ${sourceName}:`, error);
+            }
+        });
+
+        return () => {
+            Events.Off('control-source-auth');
+        };
+    }, []);
+
     return {
-        sourceManager,
         playbackStates,
-        playbackSources: sourceManager.getPlaybackSources(),
-        activeProvider: sourceManager.getActiveProvider(),
         activePlaybackState: activeSource ? playbackStates.get(activeSource) ?? null : null
     };
 }
