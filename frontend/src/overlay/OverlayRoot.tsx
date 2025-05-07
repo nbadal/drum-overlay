@@ -5,7 +5,7 @@ import {Note, td50NoteMap} from "../notes.ts";
 import {useAudioPlayback} from "../hooks/useAudioPlayback.ts";
 import {AudioProvider, PlaybackTrack} from "../audio/types.ts";
 import {useAudioAuth} from "../hooks/useAudioAuth.ts";
-import {ControlsState, ControlsStateDefault, ProviderControlState} from "../controls/state.ts";
+import {ControlsState, ControlsStateDefault} from "../controls/state.ts";
 import {sourcePlaybackManager} from "../audio/SourcePlaybackManager.ts";
 
 function OverlayRoot() {
@@ -68,12 +68,11 @@ function OverlayContent() {
                     const source = sourcePlaybackManager.getPlaybackSources().get(provider);
                     const creds = credentials[provider];
                     console.log("Provider:", provider, "Playback:", playback, "Source:", source, "Credentials:", creds);
-                    const state: ProviderControlState = {
+                    newStates[provider] = {
                         playbackState: playback || null,
                         isConnected: source?.isConnected || false,
                         hasCredentials: !!creds,
                     };
-                    newStates[provider] = state;
                 }
                 return ({...prev, providerStates: newStates});
             });
