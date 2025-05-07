@@ -1,11 +1,14 @@
 import {useEffect, useState} from 'react';
 import {SpotifyPlayback} from '../audio/spotify/playback.ts';
-import {AudioProvider, AuthCredentials, PlaybackState} from '../audio/types';
+import {AudioProvider, PlaybackState} from '../audio/types';
 import {Events} from "@wailsio/runtime";
 import {sourcePlaybackManager} from "../audio/SourcePlaybackManager.ts";
+import {ProviderCredentials} from "./useAudioAuth.ts";
 
-export function useAudioPlayback(credentials: { [source in AudioProvider]: AuthCredentials | null }) {
-    const [playbackStates, setPlaybackStates] = useState<Map<AudioProvider, PlaybackState | undefined>>(() => new Map());
+export type ProviderPlaybacks = Map<AudioProvider, PlaybackState | undefined>
+
+export function useAudioPlayback(credentials: ProviderCredentials): ProviderPlaybacks {
+    const [playbackStates, setPlaybackStates] = useState<ProviderPlaybacks>(() => new Map());
     const [activeSource, setActiveSource] = useState<AudioProvider | null>(null);
 
     useEffect(() => {
@@ -66,7 +69,5 @@ export function useAudioPlayback(credentials: { [source in AudioProvider]: AuthC
         };
     }, []);
 
-    return {
-        playbackStates,
-    };
+    return playbackStates;
 }

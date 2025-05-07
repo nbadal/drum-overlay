@@ -4,10 +4,12 @@ import {SpotifyAuthStrategy} from "../audio/spotify/auth.ts";
 import {AudioProvider, AuthCredentials} from "../audio/types.ts";
 import {Events} from "@wailsio/runtime";
 
+export type ProviderCredentials = {
+    [source in AudioProvider]: AuthCredentials | null;
+}
+
 export function useAudioAuth() {
-    const [credentials, setCredentials] = useState<{
-        [source in AudioProvider]: AuthCredentials | null;
-    }>({
+    const [credentials, setCredentials] = useState<ProviderCredentials>({
         [AudioProvider.Spotify]: null,
     });
 
@@ -61,20 +63,5 @@ export function useAudioAuth() {
         };
     }, []);
 
-    return {
-        credentials,
-        isAuthenticated: (provider: AudioProvider) => sourceAuthManager.isAuthenticated(provider),
-        authenticate: async (provider: AudioProvider) => {
-            const creds = await sourceAuthManager.authenticate(provider);
-            setCredentials(prev => ({...prev, [provider]: creds}));
-        },
-        disconnect: async (provider: AudioProvider) => {
-            await sourceAuthManager.disconnect(provider);
-            setCredentials(prev => {
-                const newCreds = {...prev};
-                newCreds[provider] = null;
-                return newCreds;
-            });
-        }
-    };
+    return credentials;
 }
