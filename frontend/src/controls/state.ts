@@ -2,6 +2,7 @@ import {AudioProvider, PlaybackState} from "../audio/types.ts";
 
 export interface ProviderControlState {
     isConnected: boolean;
+    isConnecting: boolean;
     hasCredentials: boolean;
     playbackState: PlaybackState | null;
 }
@@ -12,6 +13,7 @@ export interface ControlsState {
 
 export const ControlsStateInitial: ProviderControlState = {
     isConnected: false,
+    isConnecting: false,
     hasCredentials: false,
     playbackState: null,
 }

@@ -26,6 +26,7 @@ export interface PlaybackState {
 export interface PlaybackSource {
     provider: AudioProvider;
     isConnected: boolean;
+    isConnecting: boolean;
 
     connect(): Promise<void>;
 

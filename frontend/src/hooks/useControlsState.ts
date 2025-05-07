@@ -1,5 +1,5 @@
 import {useEffect, useState} from "react";
-import {ControlsState, ControlsStateDefault} from "../controls/state.ts";
+import {ControlsState, ControlsStateDefault, ProviderControlState} from "../controls/state.ts";
 import {Events} from "@wailsio/runtime";
 import {sourcePlaybackManager} from "../audio/SourcePlaybackManager.ts";
 import {AudioProvider, PlaybackState} from "../audio/types.ts";
@@ -24,8 +24,9 @@ export function useControlsState(
                     newStates[provider] = {
                         playbackState: playback || null,
                         isConnected: source?.isConnected || false,
+                        isConnecting: source?.isConnecting || false,
                         hasCredentials: !!creds,
-                    };
+                    } as ProviderControlState;
                 }
                 return ({...prev, providerStates: newStates});
             });

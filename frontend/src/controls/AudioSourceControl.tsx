@@ -15,6 +15,8 @@ export function AudioSourceControl({name, state, onClick}: AudioSourceControlPro
     let buttonText = name;
     if (state.isConnected) {
         buttonText += " Connected";
+    } else if (state.isConnecting) {
+        buttonText += " Connecting...";
     } else if (!state.hasCredentials) {
         buttonText += " Login";
     } else {
@@ -26,7 +28,7 @@ export function AudioSourceControl({name, state, onClick}: AudioSourceControlPro
             <ControlsButton
                 text={buttonText}
                 onClick={onClick}
-                disabled={state.isConnected}
+                disabled={state.isConnected || state.isConnecting}
                 icon={<MusicNote/>}
             />
             {state.playbackState && (

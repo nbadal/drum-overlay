@@ -1,10 +1,12 @@
 import {AudioProvider, PlaybackEvents, PlaybackSource, PlaybackState} from '../types.ts';
 
 export class SpotifyPlayback implements PlaybackSource {
+    private readonly events: PlaybackEvents;
+    private readonly token: string | null = null;
+
     private player: Spotify.Player | null = null;
     private playbackState: Spotify.PlaybackState | null = null;
-    private events: PlaybackEvents;
-    private token: string | null = null;
+    private pendingConnection = false;
 
     constructor(events: PlaybackEvents, token: string) {
         this.events = events;
@@ -19,11 +21,22 @@ export class SpotifyPlayback implements PlaybackSource {
         return this.player !== null;
     }
 
+    get isConnecting(): boolean {
+        return this.pendingConnection;
+    }
+
     async connect(): Promise<void> {
         // Load Spotify SDK script if not already loaded
         if (!window.Spotify) {
             await this.loadSpotifyScript();
         }
+
+        // Skip if already connected
+        if (this.isConnected || this.pendingConnection) {
+            console.log('Already connected to Spotify');
+            return;
+        }
+        this.pendingConnection = true;
 
         return new Promise((resolve, reject) => {
             const player = new window.Spotify.Player({
@@ -34,6 +47,7 @@ export class SpotifyPlayback implements PlaybackSource {
 
             player.addListener('ready', ({device_id}) => {
                 console.log('Ready with Device ID', device_id);
+                this.pendingConnection = false;
                 this.player = player;
                 this.events.onConnectionChange?.(true);
                 resolve();
@@ -41,6 +55,7 @@ export class SpotifyPlayback implements PlaybackSource {
 
             player.addListener('not_ready', ({device_id}) => {
                 console.log('Device ID has gone offline', device_id);
+                this.pendingConnection = false;
                 this.player = null;
                 this.events.onConnectionChange?.(false);
             });
